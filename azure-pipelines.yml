@@ -1,0 +1,33 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+- group: var-group-01
+
+
+steps:
+- script: |
+    pip install ggshield
+    ggshield secret scan ci
+  env:
+    GITGUARDIAN_API_KEY: $(gitguardianApiKey)
+  displayName: 'Run GitGuardian Secret Scan'
+
+- script: |
+    echo "Listing all files in the System Default Working Directory:"
+    ls -l $(System.DefaultWorkingDirectory)
+  displayName: 'List Files in Working Directory'
+
+- script: |
+    mkdir -p $(Build.ArtifactStagingDirectory)/terraform
+    cp -R $(System.DefaultWorkingDirectory)/*.tf $(Build.ArtifactStagingDirectory)/terraform/
+  displayName: 'Copy Terraform Files'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/terraform'
+    ArtifactName: 'terraform'
+    publishLocation: 'Container'
